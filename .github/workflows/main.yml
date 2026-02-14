@@ -1,0 +1,56 @@
+name: Build for Windows 7
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  # Ręczne uruchomienie
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2019
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python 3.8.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller==4.10
+        pip install pillow==8.4.0
+        pip install pystray==0.17.3
+        pip install chardet==4.0.0
+    
+    - name: Build executable with PyInstaller
+      run: |
+        pyinstaller --onefile --windowed --name CNC_Archiver_Win7 cnc_archiver.py
+    
+    - name: Create distribution package
+      run: |
+        mkdir -p dist/package
+        copy dist\CNC_Archiver_Win7.exe dist\package\
+        echo CNC Archiver - Portable > dist\package\README.txt
+        echo. >> dist\package\README.txt
+        echo Uruchom: CNC_Archiver_Win7.exe >> dist\package\README.txt
+        echo. >> dist\package\README.txt
+        echo Pliki konfiguracyjne tworzone automatycznie w folderze aplikacji. >> dist\package\README.txt
+    
+    - name: Upload executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: CNC_Archiver_Win7_exe
+        path: dist/CNC_Archiver_Win7.exe
+    
+    - name: Upload package
+      uses: actions/upload-artifact@v3
+      with:
+        name: CNC_Archiver_Win7_package
+        path: dist/package/
